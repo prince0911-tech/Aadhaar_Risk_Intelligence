@@ -1,3 +1,6 @@
-__pycache__/
 .ipynb_checkpoints/
-.env
+__pycache__/
+*.pyc
+Note_books/.ipynb_checkpoints/
+reference/__pycache__/
+
