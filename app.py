@@ -61,7 +61,10 @@ st.sidebar.header("Select Location & Date")
 # -------------------------------
 # Sidebar Controls
 # -------------------------------
-states = ["-- Select State --"] + sorted(df["state"].dropna().unique().tolist())
+valid_states = df["state"].dropna().astype(str)
+valid_states = valid_states[~valid_states.str.contains(r"\d", regex=True)]
+
+states = ["-- Select State --"] + sorted(valid_states.unique().tolist())
 state = st.sidebar.selectbox("State", states, key="state_select")
 
 if state != "-- Select State --":
