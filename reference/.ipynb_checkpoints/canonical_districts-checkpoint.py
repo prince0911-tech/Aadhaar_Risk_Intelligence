@@ -1,0 +1,21 @@
+CANONICAL_DISTRICTS = [
+    "North 24 Parganas",
+    "South 24 Parganas",
+    "Kolkata",
+    "Howrah",
+    "Hooghly",
+    "Bengaluru Urban",
+    "Bengaluru Rural",
+    "Mumbai",
+    "Pune",
+    "Ahmedabad",
+    "Surat",
+    "Jaipur",
+    "Jodhpur",
+    "Chennai",
+    "Coimbatore",
+    "Hyderabad",
+    "Warangal",
+    "Delhi",
+    "New Delhi"
+]
