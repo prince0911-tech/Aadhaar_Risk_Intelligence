@@ -1,11 +1,9 @@
 # =========================================
 # Aadhaar Risk Intelligence - Streamlit App
-# File: app.py
 # =========================================
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
 from datetime import datetime
 
@@ -25,12 +23,11 @@ def load_model():
 df = load_data()
 model, le = load_model()
 
-# Ensure date column is datetime
+# Parse date (DD-MM-YYYY)
 df["date"] = pd.to_datetime(df["date"], format="%d-%m-%Y", errors="coerce")
 
-
 # -------------------------------
-# Normalize State & District Names (UI-level safety)
+# UI Safety Normalization
 # -------------------------------
 def normalize_name(x):
     if pd.isna(x):
@@ -45,19 +42,28 @@ df["state"] = df["state"].apply(normalize_name)
 df["district"] = df["district"].apply(normalize_name)
 
 # -------------------------------
-# App UI
+# Page Setup
 # -------------------------------
 st.set_page_config(page_title="Aadhaar Risk Intelligence", layout="centered")
-st.title("🆔 Aadhaar Service Risk Intelligence System")
-st.markdown("Predict service stress & exclusion risk using AI.")
 
-st.sidebar.header("Select Region & Date")
+st.markdown("""
+<div style="padding:1.2rem;border-radius:14px;background:linear-gradient(135deg,#1f2933,#0f172a);color:white">
+  <h2 style="margin-bottom:0">Aadhaar Risk Intelligence</h2>
+  <p style="opacity:0.85;margin-top:4px">
+    Early-warning system to detect service stress and digital exclusion
+  </p>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("<div style='margin-top:-12px'></div>", unsafe_allow_html=True)
 
-# ---- State (default none) ----
+st.sidebar.header("Select Location & Date")
+
+# -------------------------------
+# Sidebar Controls
+# -------------------------------
 states = ["-- Select State --"] + sorted(df["state"].dropna().unique().tolist())
-state = st.sidebar.selectbox("State", states)
+state = st.sidebar.selectbox("State", states, key="state_select")
 
-# ---- District (depends on State) ----
 if state != "-- Select State --":
     districts = ["-- Select District --"] + sorted(
         df[df["state"] == state]["district"].dropna().unique().tolist()
@@ -65,9 +71,8 @@ if state != "-- Select State --":
 else:
     districts = ["-- Select District --"]
 
-district = st.sidebar.selectbox("District", districts)
+district = st.sidebar.selectbox("District", districts, key="district_select")
 
-# ---- Date handling ----
 row = pd.DataFrame()
 filtered = pd.DataFrame()
 
@@ -77,24 +82,24 @@ if state != "-- Select State --" and district != "-- Select District --":
 
     if available_dates:
         today = pd.to_datetime(datetime.today().date())
-
-        # Map display format -> actual datetime
         date_map = {pd.to_datetime(d).strftime("%d/%m/%Y"): d for d in available_dates}
         display_dates = list(date_map.keys())
 
         today_str = today.strftime("%d/%m/%Y")
-        if today_str in date_map:
-            default_index = display_dates.index(today_str)
-        else:
-            default_index = len(display_dates) - 1  # latest date
+        default_index = display_dates.index(today_str) if today_str in date_map else len(display_dates) - 1
 
-        selected_display = st.sidebar.selectbox("Date", display_dates, index=default_index)
+        selected_display = st.sidebar.selectbox(
+            "Date",
+            display_dates,
+            index=default_index,
+            key="date_select"
+        )
         date = date_map[selected_display]
         row = filtered[filtered["date"] == date]
     else:
         st.sidebar.warning("No dates available for this region.")
 else:
-    st.sidebar.info("Please select State and District.")
+    st.sidebar.info("Select State and District to begin.")
 
 # -------------------------------
 # Prediction
@@ -116,26 +121,27 @@ if st.sidebar.button("Analyze Risk"):
         pred = model.predict(features)[0]
         risk = le.inverse_transform([pred])[0]
 
-        # Display result
-        st.subheader(f"📍 {district}, {state}")
+        st.markdown("""
+        <div style="padding:1rem;border-radius:14px;border:1px solid #e5e7eb;background:#fafafa">
+        """, unsafe_allow_html=True)
+
+        st.subheader(f"{district}, {state}")
         st.markdown(f"### Risk Level: **{risk}**")
 
         if risk == "High":
-            st.error("High service stress & exclusion risk detected.")
+            st.error("Service stress is high. Citizens may face access issues.")
         elif risk == "Medium":
-            st.warning("Moderate service stress detected.")
+            st.warning("Early signs of stress detected. Monitoring is advised.")
         else:
-            st.success("Low risk. Services are operating normally.")
+            st.success("Services appear stable in this region.")
 
-        # Key stats
-        st.markdown("#### Key Indicators")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Enrolment", int(row["total_enrolment"].values[0]))
-        col2.metric("Bio Ratio (17+)", round(row["bio_ratio_17"].values[0], 2))
-        col3.metric("Child Share", round(row["child_share"].values[0], 2))
+        st.markdown("#### What’s happening here")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Enrolment", int(row["total_enrolment"].values[0]))
+        c2.metric("Biometric Pressure (17+)", round(row["bio_ratio_17"].values[0], 2))
+        c3.metric("Child Share", round(row["child_share"].values[0], 2))
 
-        # Recommendations
-        st.markdown("#### Suggested Actions")
+        st.markdown("#### What administrators can do")
         if risk == "High":
             st.write("- Deploy mobile Aadhaar vans")
             st.write("- Increase centre staff temporarily")
@@ -147,10 +153,9 @@ if st.sidebar.button("Analyze Risk"):
             st.write("- Maintain current operations")
             st.write("- Continue monitoring trends")
 
-        # -------------------------------
-        # 1) AI Decision Factors
-        # -------------------------------
-        st.markdown("### 🧠 AI Decision Factors")
+        st.markdown("---")
+        st.markdown("#### Why the system flagged this")
+
         factors = pd.DataFrame({
             "Metric": [
                 "Total Enrolment", "Child Share", "Youth Share", "Adult Share",
@@ -168,37 +173,23 @@ if st.sidebar.button("Analyze Risk"):
         })
         st.table(factors)
 
-        # -------------------------------
-        # 2) Trends
-        # -------------------------------
-        st.markdown("### 📈 Trends")
+        st.markdown("---")
+        st.markdown("#### Recent movement")
 
-        trend_df = filtered.sort_values("date")
-        
-        if len(trend_df) < 2:
-            st.info("Not enough historical records to draw a trend for this district.")
-            
-            # Show single-point values clearly
-            st.write("Current Values:")
-            st.write(f"- Enrolment: {int(row['total_enrolment'].values[0])}")
-            st.write(f"- Biometric Ratio (17+): {round(row['bio_ratio_17'].values[0], 2)}")
+        trend_df = filtered.dropna(subset=["date"]).sort_values("date")
+        if trend_df["date"].nunique() < 2:
+            st.info("Not enough historical dates to form a trend for this district.")
         else:
-            trend_df = trend_df.tail(20)  # show up to last 20 records
-        
+            trend_df = trend_df.tail(20)
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown("**Enrolment Trend**")
                 st.line_chart(trend_df.set_index("date")["total_enrolment"])
-        
             with c2:
-                st.markdown("**Biometric Pressure (17+) Trend**")
                 st.line_chart(trend_df.set_index("date")["bio_ratio_17"])
 
+        st.markdown("---")
+        st.markdown("#### What this means")
 
-        # -------------------------------
-        # 3) Contextual Insights
-        # -------------------------------
-        st.markdown("### 💡 Insights")
         state_df = df[df["state"] == state]
         state_avg_enr = state_df["total_enrolment"].mean()
         state_avg_bio = state_df["bio_ratio_17"].mean()
@@ -213,6 +204,7 @@ if st.sidebar.button("Analyze Risk"):
         st.write(f"- Biometric pressure is **{bio_change:.1f}%** {'higher' if bio_change > 0 else 'lower'} than the state average.")
         st.write(f"- Child enrolment share is **{row['child_share'].values[0]*100:.1f}%** in this district.")
 
-# Footer
+        st.markdown("</div>", unsafe_allow_html=True)
+
 st.markdown("---")
 st.caption("Hackathon Prototype – AI for Digital Governance")
