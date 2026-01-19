@@ -69,13 +69,13 @@ Aadhaar-Risk-Intelligence/
 ## 📸 Screenshots
 
 ### Dashboard Overview
-![Dashboard](screenshots/dashboard_home.png)
+![Dashboard](screenshot/dashboard_home.png)
 
 ### High Risk Example
-![High Risk](screenshots/risk_high.png)
+![High Risk](screenshot/risk_high.png)
 
 ### Trends & Insights
-![Trends](screenshots/trends_view.png)
+![Trends](screenshot/trends_view.png)
 
 
 ### Flow
