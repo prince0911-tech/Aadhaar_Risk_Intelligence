@@ -10,6 +10,12 @@ Built as a hackathon-ready prototype with:
 - Interactive Streamlit dashboard
 - Explainable AI outputs
 
+
+## 🌐 Live Demo
+
+🚀 Try the live prototype here:  
+**https://aadhaar-risk-intelligence.streamlit.app/**
+
 ---
 
 ## 🚀 What It Does
@@ -117,9 +123,9 @@ This creates:
 streamlit run app.py 
 ```
 ### 4. Open in browser:
-```
-http://localhost:8501
-```
+
+**http://localhost:8501**
+
 ---
 ### HACKATHON PITCH
 
